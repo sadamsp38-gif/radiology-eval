@@ -179,7 +179,7 @@ export default function AdminView() {
   return (
     <div className="flex min-h-screen flex-col bg-[#F5F7FA]">
       <header className="bg-[#0A1628] px-6 py-6 text-white shadow-md">
-        <h1 className="text-2xl font-bold">Admin — All Reviewer Results</h1>
+        <h1 className="text-2xl font-bold">Admin — All Reviewer Results here</h1>
         <p className="mt-1 text-sm text-blue-100">
           
         </p>
