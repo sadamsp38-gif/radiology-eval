@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Download, FileText, Users, BarChart3, LayoutDashboard, Trash2 } from 'lucide-react';
+import { Download, FileText, Users, BarChart3, LayoutDashboard, Trash2, MessageSquarePlus, ShieldCheck } from 'lucide-react';
 import AdminNlgTab from './AdminNlgTab';
+import SupervisorFeedbackTab from './SupervisorFeedbackTab';
+import AdminFeedbackViewTab from './AdminFeedbackViewTab';
 import samples from '../data/samples.json';
 import {
   getAllReviewers,
@@ -83,6 +85,8 @@ function enrichRating(r, samplesById) {
 const TABS = [
   { id: 'overview', label: 'Overview & ratings', icon: LayoutDashboard },
   { id: 'nlg', label: 'NLG vs AI category', icon: BarChart3 },
+  { id: 'supervisor-feedback', label: 'Supervisor Feedback', icon: MessageSquarePlus },
+  { id: 'view-feedback', label: 'View Feedback', icon: ShieldCheck },
 ];
 
 export default function AdminView() {
@@ -206,6 +210,10 @@ export default function AdminView() {
 
         {activeTab === 'nlg' ? (
           <AdminNlgTab />
+        ) : activeTab === 'supervisor-feedback' ? (
+          <SupervisorFeedbackTab />
+        ) : activeTab === 'view-feedback' ? (
+          <AdminFeedbackViewTab />
         ) : (
           <>
         <div className="mb-6 flex flex-wrap gap-3">

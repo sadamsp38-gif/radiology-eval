@@ -105,3 +105,31 @@ export function clearAllStudyData() {
   for (const key of keysToRemove) localStorage.removeItem(key);
   return keysToRemove.length;
 }
+
+// ─── Supervisor Feedback ────────────────────────────────────────────────────
+const FEEDBACK_KEY = 'radeval_supervisor_feedback';
+
+export function saveSupervisorFeedback({ name, role, message }) {
+  const existing = getAllSupervisorFeedback();
+  existing.push({
+    name: name.trim(),
+    role: role.trim(),
+    message: message.trim(),
+    timestamp: new Date().toISOString(),
+  });
+  localStorage.setItem(FEEDBACK_KEY, JSON.stringify(existing));
+}
+
+export function getAllSupervisorFeedback() {
+  const raw = localStorage.getItem(FEEDBACK_KEY);
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+export function clearSupervisorFeedback() {
+  localStorage.removeItem(FEEDBACK_KEY);
+}
