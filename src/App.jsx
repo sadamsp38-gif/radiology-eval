@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import samplesData from './data/samples.json';
 import WelcomeScreen from './components/WelcomeScreen';
+import ScoringGuide from './components/ScoringGuide';
 import EvaluationScreen from './components/EvaluationScreen';
 import CompletionScreen from './components/CompletionScreen';
 import AdminView from './components/AdminView';
@@ -12,7 +13,12 @@ import {
   getReviewerInfo,
 } from './utils/storage';
 
-const SCREENS = { welcome: 'welcome', evaluation: 'evaluation', completion: 'completion' };
+const SCREENS = {
+  welcome: 'welcome',
+  scoringGuide: 'scoring-guide',
+  evaluation: 'evaluation',
+  completion: 'completion',
+};
 
 function findResumeIndex(shuffled, reviewerName) {
   for (let i = 0; i < shuffled.length; i++) {
@@ -58,8 +64,12 @@ export default function App() {
       return;
     }
 
-    const idx = resume ? findResumeIndex(shuffled, name) : findResumeIndex(shuffled, name);
-    setCurrentIndex(idx);
+    setCurrentIndex(findResumeIndex(shuffled, name));
+    // Returning reviewers skip the guide; new reviewers read it first
+    setScreen(resume ? SCREENS.evaluation : SCREENS.scoringGuide);
+  }
+
+  function handleScoringGuideStart() {
     setScreen(SCREENS.evaluation);
   }
 
@@ -78,6 +88,16 @@ export default function App() {
 
   if (screen === SCREENS.welcome) {
     return <WelcomeScreen onStart={handleStart} />;
+  }
+
+  if (screen === SCREENS.scoringGuide) {
+    return (
+      <ScoringGuide
+        reviewerName={reviewerName}
+        reviewerRole={reviewerRole}
+        onStart={handleScoringGuideStart}
+      />
+    );
   }
 
   if (screen === SCREENS.completion) {

@@ -1,101 +1,91 @@
 import { useState } from 'react';
-import { ShieldCheck, Lock, Eye, EyeOff, Trash2, Inbox } from 'lucide-react';
-import { getAllSupervisorFeedback, clearSupervisorFeedback } from '../utils/storage';
+import { Lock, ShieldCheck, Trash2, User, MessageSquare } from 'lucide-react';
+import {
+  getAllSupervisorFeedback,
+  clearSupervisorFeedback,
+} from '../utils/storage';
 
 const PASSKEY = 'sp12345';
 
-function formatDate(iso) {
-  if (!iso) return '—';
+function formatTimestamp(iso) {
   try {
-    return new Date(iso).toLocaleString();
+    return new Date(iso).toLocaleString(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
   } catch {
-    return iso;
+    return iso ?? '—';
   }
 }
 
 export default function AdminFeedbackViewTab() {
-  const [inputKey, setInputKey] = useState('');
-  const [showInput, setShowInput] = useState(false);
+  const [passkey, setPasskey] = useState('');
   const [unlocked, setUnlocked] = useState(false);
-  const [keyError, setKeyError] = useState(false);
-  const [feedbackList, setFeedbackList] = useState([]);
+  const [error, setError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const feedback = unlocked ? getAllSupervisorFeedback() : [];
 
   function handleUnlock(e) {
     e.preventDefault();
-    if (inputKey === PASSKEY) {
+    if (passkey === PASSKEY) {
       setUnlocked(true);
-      setKeyError(false);
-      setFeedbackList(getAllSupervisorFeedback());
+      setError('');
     } else {
-      setKeyError(true);
+      setError('Incorrect passkey. Please try again.');
     }
   }
 
-  function handleClear() {
+  function handleLock() {
+    setUnlocked(false);
+    setPasskey('');
+    setError('');
+  }
+
+  function handleClearAll() {
     const ok = window.confirm(
-      'This will permanently delete ALL supervisor feedback. Continue?',
+      'Delete all supervisor feedback stored in this browser? This cannot be undone.',
     );
     if (!ok) return;
     clearSupervisorFeedback();
-    setFeedbackList([]);
+    setRefreshKey((k) => k + 1);
   }
 
-  function handleRefresh() {
-    setFeedbackList(getAllSupervisorFeedback());
-  }
-
-  // ── Lock screen ─────────────────────────────────────────────────────────
   if (!unlocked) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center py-10">
-        <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[#E3EAF2] bg-white shadow-xl">
-          {/* Icon header */}
-          <div className="flex flex-col items-center gap-3 bg-gradient-to-br from-[#0A1628] to-[#1565C0] px-6 py-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
-              <Lock className="h-7 w-7 text-white" />
+      <div className="mx-auto max-w-md py-10">
+        <div className="overflow-hidden rounded-xl border border-[#E3EAF2] bg-white shadow-md">
+          <div className="border-b border-[#E3EAF2] bg-gray-50 px-5 py-4 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#1565C0]/10">
+              <Lock className="h-6 w-6 text-[#1565C0]" />
             </div>
-            <h2 className="text-lg font-bold text-white">Protected Area</h2>
-            <p className="text-center text-sm text-blue-200">
-              Enter the admin passkey to view supervisor feedback.
-            </p>
+            <h2 className="text-lg font-bold text-[#0A1628]">View Supervisor Feedback</h2>
+            <p className="mt-1 text-sm text-gray-500">Enter passkey to view submitted suggestions</p>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleUnlock} className="px-6 py-6 space-y-4">
+          <form onSubmit={handleUnlock} className="space-y-4 px-5 py-6">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Passkey
-              </label>
-              <div className="relative">
-                <input
-                  type={showInput ? 'text' : 'password'}
-                  value={inputKey}
-                  onChange={(e) => { setInputKey(e.target.value); setKeyError(false); }}
-                  placeholder="Enter passkey…"
-                  autoComplete="current-password"
-                  className={`w-full rounded-lg border px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 ${
-                    keyError
-                      ? 'border-red-400 focus:border-red-500 focus:ring-red-200 bg-red-50'
-                      : 'border-[#E3EAF2] focus:border-[#1565C0] focus:ring-[#1565C0]/25'
-                  }`}
-                />
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  onClick={() => setShowInput((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showInput ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              {keyError && (
-                <p className="mt-1.5 text-xs font-medium text-red-600">Incorrect passkey. Please try again.</p>
-              )}
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">Passkey</label>
+              <input
+                type="password"
+                value={passkey}
+                onChange={(e) => {
+                  setPasskey(e.target.value);
+                  setError('');
+                }}
+                placeholder="Enter passkey"
+                autoComplete="off"
+                className="w-full rounded-lg border border-[#E3EAF2] px-4 py-2.5 text-sm focus:border-[#1565C0] focus:outline-none focus:ring-2 focus:ring-[#1565C0]/25"
+              />
             </div>
+
+            {error && (
+              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+            )}
 
             <button
               type="submit"
-              className="w-full rounded-lg bg-[#1565C0] py-2.5 text-sm font-semibold text-white hover:bg-[#0d47a1] active:scale-95 transition-transform"
+              className="w-full rounded-lg bg-[#1565C0] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0d47a1]"
             >
               Unlock
             </button>
@@ -105,82 +95,73 @@ export default function AdminFeedbackViewTab() {
     );
   }
 
-  // ── Unlocked view ────────────────────────────────────────────────────────
+  const list = getAllSupervisorFeedback();
+  void refreshKey;
+
   return (
-    <div className="py-6">
-      {/* Header row */}
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
             <ShieldCheck className="h-5 w-5 text-green-700" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-[#0A1628]">Supervisor Feedback</h2>
+            <h2 className="text-lg font-bold text-[#0A1628]">Supervisor Suggestions</h2>
             <p className="text-sm text-gray-500">
-              {feedbackList.length} submission{feedbackList.length !== 1 ? 's' : ''} recorded
+              {list.length} submission{list.length !== 1 ? 's' : ''} in this browser
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={handleRefresh}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[#E3EAF2] bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            onClick={handleLock}
+            className="rounded-lg border border-[#E3EAF2] bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
-            Refresh
+            Lock
           </button>
-          <button
-            type="button"
-            onClick={handleClear}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
-          >
-            <Trash2 className="h-4 w-4" />
-            Clear All
-          </button>
+          {list.length > 0 && (
+            <button
+              type="button"
+              onClick={handleClearAll}
+              className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+            >
+              <Trash2 className="h-4 w-4" />
+              Clear all feedback
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-[#E3EAF2] bg-white shadow-md">
-        {feedbackList.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-16 text-gray-400">
-            <Inbox className="h-10 w-10" />
-            <p className="text-sm font-medium">No feedback submitted yet.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] text-left text-sm">
-              <thead className="bg-gray-100 text-xs uppercase tracking-wide text-gray-600">
-                <tr>
-                  <th className="px-4 py-3">#</th>
-                  <th className="px-4 py-3">Name</th>
-                  <th className="px-4 py-3">Role</th>
-                  <th className="px-4 py-3">Submitted</th>
-                  <th className="px-4 py-3">Comment / Suggestion</th>
-                </tr>
-              </thead>
-              <tbody>
-                {feedbackList.map((fb, idx) => (
-                  <tr
-                    key={idx}
-                    className="border-t border-[#E3EAF2] align-top hover:bg-gray-50"
-                  >
-                    <td className="px-4 py-3 text-gray-400">{idx + 1}</td>
-                    <td className="px-4 py-3 font-medium text-[#0A1628]">{fb.name || '—'}</td>
-                    <td className="px-4 py-3 text-gray-600">{fb.role || '—'}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-gray-500">
-                      {formatDate(fb.timestamp)}
-                    </td>
-                    <td className="px-4 py-3 text-gray-800">
-                      <p className="max-w-[420px] whitespace-pre-wrap break-words">{fb.message}</p>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {list.length === 0 ? (
+        <div className="rounded-xl border border-[#E3EAF2] bg-white px-6 py-12 text-center shadow-sm">
+          <MessageSquare className="mx-auto h-10 w-10 text-gray-300" />
+          <p className="mt-3 text-sm text-gray-500">No supervisor feedback submitted yet.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {[...list].reverse().map((entry, i) => (
+            <article
+              key={`${entry.timestamp}-${i}`}
+              className="overflow-hidden rounded-xl border border-[#E3EAF2] bg-white shadow-sm"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E3EAF2] bg-gray-50 px-4 py-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <User className="h-4 w-4 text-gray-400" />
+                  <span className="font-semibold text-[#0A1628]">{entry.name}</span>
+                  {entry.role?.trim() && (
+                    <span className="text-gray-500">· {entry.role}</span>
+                  )}
+                </div>
+                <time className="text-xs text-gray-500">{formatTimestamp(entry.timestamp)}</time>
+              </div>
+              <p className="whitespace-pre-wrap px-4 py-4 text-sm leading-relaxed text-gray-700">
+                {entry.message}
+              </p>
+            </article>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
